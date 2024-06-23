@@ -1,2 +1,0 @@
-# Auto
-Automated processing script
