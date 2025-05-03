@@ -1,0 +1,234 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "alertNameCPU": {
+            "type": "string",
+            "defaultValue": "HighCPUAlert",
+            "minLength": 1,
+            "maxLength": 260,
+            "metadata": {
+                "description": "CPU警报规则名称"
+            }
+        },
+        "alertNameMemory": {
+            "type": "string",
+            "defaultValue": "HighMemoryAlert",
+            "metadata": {
+                "description": "内存警报名称"
+            }
+        },
+        "alertNameDiskSpace": {
+            "type": "string",
+            "defaultValue": "LowDiskSpaceAlert",
+            "metadata": {
+                "description": "磁盘空间警报名称"
+            }
+        },
+        "alertNameIOPS": {
+            "type": "string",
+            "defaultValue": "HighIOPSAlert",
+            "metadata": {
+                "description": "IOPS警报名称"
+            }
+        },
+        "targetResourceId": {
+            "type": "string",
+            "metadata": {
+                "description": "目标虚拟机资源ID"
+            }
+        },
+        "actionGroupId": {
+            "type": "string",
+            "metadata": {
+                "description": "操作组资源ID"
+            }
+        },
+        "cpuThreshold": {
+            "type": "int",
+            "defaultValue": 90,
+            "minValue": 0,
+            "maxValue": 100,
+            "metadata": {
+                "description": "CPU使用率阈值百分比"
+            }
+        },
+        "memoryThreshold": {
+            "type": "int",
+            "defaultValue": 90,
+            "minValue": 0,
+            "maxValue": 100,
+            "metadata": {
+                "description": "内存使用率阈值百分比"
+            }
+        },
+        "diskSpaceThreshold": {
+            "type": "int",
+            "defaultValue": 10,
+            "minValue": 0,
+            "maxValue": 100,
+            "metadata": {
+                "description": "磁盘剩余空间阈值百分比"
+            }
+        },
+        "iopsThreshold": {
+            "type": "int",
+            "defaultValue": 95,
+            "minValue": 0,
+            "maxValue": 100,
+            "metadata": {
+                "description": "IOPS消耗百分比阈值"
+            }
+        },
+        "severity": {
+            "type": "int",
+            "defaultValue": 2,
+            "allowedValues": [0, 1, 2, 3, 4],
+            "metadata": {
+                "description": "警报严重性：0=关键,1=错误,2=警告,3=信息,4=详细"
+            }
+        }
+    },
+    "variables": {
+        "vmMetricNamespace": "Microsoft.Compute/virtualMachines",
+        "diskMetricNamespace": "Microsoft.Compute/virtualMachines/disks"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Insights/metricAlerts",
+            "apiVersion": "2018-03-01",
+            "name": "[parameters('alertNameCPU')]",
+            "location": "global",
+            "properties": {
+                "description": "[concat('CPU使用率超过', parameters('cpuThreshold'), '%时触发')]",
+                "severity": "[parameters('severity')]",
+                "enabled": true,
+                "scopes": ["[parameters('targetResourceId')]"],
+                "evaluationFrequency": "PT5M",
+                "windowSize": "PT15M",
+                "criteria": {
+                    "odata.type": "Microsoft.Azure.Monitor.SingleResourceMultipleMetricCriteria",
+                    "allOf": [
+                        {
+                            "criterionType": "StaticThresholdCriterion",
+                            "name": "HighCPU",
+                            "metricNamespace": "[variables('vmMetricNamespace')]",
+                            "metricName": "Percentage CPU",
+                            "dimensions": [],
+                            "operator": "GreaterThan",
+                            "threshold": "[parameters('cpuThreshold')]",
+                            "timeAggregation": "Average"
+                        }
+                    ]
+                },
+                "actions": [
+                    {
+                        "actionGroupId": "[parameters('actionGroupId')]"
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Insights/metricAlerts",
+            "apiVersion": "2018-03-01",
+            "name": "[parameters('alertNameMemory')]",
+            "location": "global",
+            "properties": {
+                "description": "[concat('内存使用超过', parameters('memoryThreshold'), '%时触发')]",
+                "severity": "[parameters('severity')]",
+                "enabled": true,
+                "scopes": ["[parameters('targetResourceId')]"],
+                "evaluationFrequency": "PT5M",
+                "windowSize": "PT15M",
+                "criteria": {
+                    "odata.type": "Microsoft.Azure.Monitor.SingleResourceMultipleMetricCriteria",
+                    "allOf": [
+                        {
+                            "criterionType": "StaticThresholdCriterion",
+                            "name": "HighMemoryUsage",
+                            "metricNamespace": "[variables('vmMetricNamespace')]",
+                            "metricName": "Available Memory Bytes",
+                            "operator": "LessThan",
+                            "threshold": "[parameters('memoryThreshold')]",
+                            "timeAggregation": "Average",
+                            "dimensions": []
+                        }
+                    ]
+                },
+                "actions": [
+                    {
+                        "actionGroupId": "[parameters('actionGroupId')]"
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Insights/metricAlerts",
+            "apiVersion": "2018-03-01",
+            "name": "[parameters('alertNameDiskSpace')]",
+            "location": "global",
+            "properties": {
+                "description": "[concat('磁盘剩余空间低于', parameters('diskSpaceThreshold'), '%时触发')]",
+                "severity": "[parameters('severity')]",
+                "enabled": true,
+                "scopes": ["[parameters('targetResourceId')]"],
+                "evaluationFrequency": "PT5M",
+                "windowSize": "PT15M",
+                "criteria": {
+                    "odata.type": "Microsoft.Azure.Monitor.SingleResourceMultipleMetricCriteria",
+                    "allOf": [
+                        {
+                            "criterionType": "StaticThresholdCriterion",
+                            "name": "LowDiskSpace",
+                            "metricNamespace": "[variables('vmMetricNamespace')]",
+                            "metricName": "Disk Read Operations/Sec",
+                            "operator": "GreaterThan",
+                            "threshold": "[parameters('diskSpaceThreshold')]",
+                            "timeAggregation": "Average",
+                            "dimensions": []
+                        }
+                    ]
+                },
+                "actions": [
+                    {
+                        "actionGroupId": "[parameters('actionGroupId')]"
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Insights/metricAlerts",
+            "apiVersion": "2018-03-01",
+            "name": "[parameters('alertNameIOPS')]",
+            "location": "global",
+            "properties": {
+                "description": "[concat('IOPS消耗超过', parameters('iopsThreshold'), '%时触发')]",
+                "severity": "[parameters('severity')]",
+                "enabled": true,
+                "scopes": ["[parameters('targetResourceId')]"],
+                "evaluationFrequency": "PT5M",
+                "windowSize": "PT15M",
+                "criteria": {
+                    "odata.type": "Microsoft.Azure.Monitor.SingleResourceMultipleMetricCriteria",
+                    "allOf": [
+                        {
+                            "criterionType": "StaticThresholdCriterion",
+                            "name": "HighIOPSUsage",
+                            "metricNamespace": "Microsoft.Compute/virtualMachines",
+                            "metricName": "Data Disk IOPS Consumed Percentage",
+                            "operator": "GreaterThan",
+                            "threshold": "[parameters('iopsThreshold')]",
+                            "timeAggregation": "Average",
+                            "dimensions": []
+                        }
+                    ]
+                },
+                "actions": [
+                    {
+                        "actionGroupId": "[parameters('actionGroupId')]"
+                    }
+                ]
+            }
+        }
+    ]
+}
