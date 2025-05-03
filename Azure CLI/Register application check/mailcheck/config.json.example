@@ -1,0 +1,16 @@
+{
+    "email": {
+        "smtp_server": "smtp.example.com",
+        "smtp_port": 25,
+        "sender": "azure-monitor@example.com",
+        "password": "",
+        "recipients": ["admin@example.com", "team@example.com"],
+        "subject": "Azure应用注册巡检报告"
+    },
+    "azure": {
+        "tenant_id": "your-tenant-id",
+        "client_id": "your-client-id",
+        "client_secret": "your-client-secret"
+    },
+    "warning_days": 30
+}
