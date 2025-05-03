@@ -1,0 +1,13 @@
+{
+    "azure": {
+        "tenant_id": "",
+        "client_id": "",
+        "client_secret": ""
+    },
+    "warning_days": 30,
+    "log_analytics": {
+        "workspace_id": "",
+        "shared_key": "",
+        "log_type": ""
+    }
+}
